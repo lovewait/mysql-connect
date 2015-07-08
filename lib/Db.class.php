@@ -7,12 +7,23 @@
  */
 class Db{
     private $obj;
-    public function __construct($config = array() , $db_type='MysqlDriver'){
+    public static $conn;
+    public function __construct(){}
+    public function connect($config = array(),$role , $db_type='MysqlDriver'){
         if(empty($config)){
             trigger_error('数据库连接参数为空！！！',E_USER_ERROR);
         }
         require_once dirname(__FILE__).'/Db/'.$db_type.'.class.php';
-        $this->obj = $db_type::getInstance($config);
+        $this->obj = new $db_type($role);
+        if(!isset(self::$conn[$role])) {
+            if($role == 'slavery'){
+                $count = count($config['slavery']);
+                $config = $config['slavery']['s'.rand(1,$count)];
+            }else{
+                $config = $config['master'];
+            }
+            self::$conn[$role] = $this->obj->connect($config, $role);
+        }
     }
 
     public function query($sql){
