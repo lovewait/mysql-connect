@@ -7,23 +7,28 @@
  */
 class MysqliDriver{
     private static $conn;
-    private $role;
-    public function __construct($role){
-        $this->role = $role;
+    private static $obj;
+    private function __construct(){}
+    private function __clone(){}
+    public static function getInstance($config){
+        if(!self::$obj){
+            self::$obj = new self();
+        }
+        if(!self::$conn){
+            self::$conn = self::$obj->connect($config);
+        }
+        return self::$obj;
     }
-    public function connect($config,$role = "slavery"){
-
+    public function connect($config){
         extract($config);
-        if(!isset(self::$conn[$role])){
-            self::$conn[$role]=new mysqli($db_host,$db_user,$db_pass,$db_name);
+        self::$conn = new mysqli($db_host,$db_user,$db_pass,$db_name);
+        if(self::$conn){
+            self::$conn->set_charset($charset);
         }
-        if(self::$conn[$role]){
-            self::$conn[$role]->set_charset($charset);
-        }
-        return self::$conn[$role];
+        return self::$conn;
     }
     public function query($sql){
-        $result = self::$conn[$this->role]->query($sql);
+        $result = self::$conn->query($sql);
         return $result;
     }
     public function getAll($sql){
@@ -93,8 +98,8 @@ class MysqliDriver{
         return true;
     }
     public function close(){
-        if(self::$conn[$this->role]){
-            self::$conn[$this->role] ->close();
+        if(self::$conn){
+            self::$conn ->close();
         }
         return true;
     }

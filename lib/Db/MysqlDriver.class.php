@@ -7,21 +7,27 @@
  */
 class MysqlDriver{
     private static $conn;
-    private $role;
-    public function __construct($role){
-        $this->role = $role;
-    }
-    public function connect($config = array(),$role = "slavery"){
-        extract($config);
-        if(!isset(self::$conn[$role])){
-            self::$conn[$role]=mysql_connect($db_host,$db_user,$db_pass);
+    private static $obj;
+    private function __construct(){}
+    private function __clone(){}
+    public static function getInstance($config){
+        if(!self::$obj){
+            self::$obj = new self();
         }
-        mysql_select_db($db_name,self::$conn[$role]);
+        if(!self::$conn){
+            self::$conn = self::$obj->connect($config);
+        }
+        return self::$obj;
+    }
+    public function connect($config = array()){
+        extract($config);
+        self::$conn=mysql_connect($db_host,$db_user,$db_pass);
+        mysql_select_db($db_name,self::$conn);
         $this->query('SET NAMES '.$charset);
-        return self::$conn[$role];
+        return self::$conn;
     }
     public function query($sql){
-        $result=mysql_query($sql,self::$conn[$this->role]);
+        $result=mysql_query($sql,self::$conn);
         return $result;
     }
     public function getAll($sql){
@@ -91,8 +97,8 @@ class MysqlDriver{
         return true;
     }
     public function close(){
-       if(self::$conn[$this->role])
-            mysql_close(self::$conn[$this->role]);
+       if(self::$conn)
+            mysql_close(self::$conn);
         return true;
     }
 }

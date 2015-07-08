@@ -7,20 +7,28 @@
  */
 class PDODriver{
     private static $conn;
-    private $role;
-    public function __construct($role){
-        $this->role = $role;
+    private static $obj;
+    private function __construct(){}
+    private function __clone(){}
+    public static function getInstance($config){
+        if(!self::$obj){
+            self::$obj = new self();
+        }
+        if(!self::$conn){
+            self::$conn = self::$obj->connect($config);
+        }
+        return self::$obj;
     }
-    public function connect($config,$role = "slavery"){
+    public function connect($config){
         extract($config);
-        self::$conn[$role] = new PDO("mysql:dbname=$db_name;host=$db_host",$db_user,$db_pass);
-        if(self::$conn[$role]){
+        self::$conn = new PDO("mysql:dbname=$db_name;host=$db_host",$db_user,$db_pass);
+        if(self::$conn){
             $this->query("SET NAMES ".$charset);
         }
         return self::$conn;
     }
     public function query($sql){
-        $result = self::$conn[$this->role]->query($sql);
+        $result = self::$conn->query($sql);
         return $result;
     }
     public function getAll($sql){
@@ -91,8 +99,8 @@ class PDODriver{
         return true;
     }
     public function close(){
-        if(self::$conn[$this->role]){
-            unset(self::$conn[$this->role]);
+        if(self::$conn){
+            unset(self::$conn);
         }
         return true;
     }
